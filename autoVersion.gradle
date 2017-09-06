@@ -18,6 +18,7 @@ class AutoVersionPlugin implements Plugin<Project> {
 
         AutoVersionTask prepeareAutoVersion = project.tasks.create('prepeareAutoVersion', AutoVersionTask) {
             propsFile = getVersionFile()
+            lastBuildReleaseNotes = new File(getLastBuildReleaseNoteFile())
         }
 
         project.tasks.findByName("preBuild").dependsOn prepeareAutoVersion
@@ -42,7 +43,9 @@ class AutoVersionPlugin implements Plugin<Project> {
             throw new IllegalStateException("Signing properties file not exist! File: " + propsFile.absolutePath)
         }
 
-        return versionProperties["VERSION_CODE"].toString().toInteger()
+        Integer code = versionProperties["VERSION_CODE"].toString().toInteger()
+
+        return code > 0 ? code : 1
     }
 
     String getIncrementalVersionName() {
@@ -59,27 +62,35 @@ class AutoVersionPlugin implements Plugin<Project> {
         return versionProperties["VERSION_NAME"]
     }
 
-    def getLastBuildReleaseNoteFile() {
+    String getLastBuildReleaseNoteFile() {
 
-        def lastbuildNote = project.file(project.projectDir.absolutePath + "/lastBetaBuildNotes.txt")
+        String path = project.projectDir.absolutePath + "/autoVersion/lastBetaBuildNotes.txt"
 
-        if (!lastbuildNote.exists()){
-            new File(project.projectDir.absolutePath + "/lastBetaBuildNotes.txt").withWriterAppend { w ->
-                w << "Initial release note."
-            }
+        File lastbuildNote = new File(path)
+
+        if (!lastbuildNote.exists()) {
+
+            lastbuildNote.parentFile.mkdirs()
+            lastbuildNote.createNewFile()
+            lastbuildNote.write("Initial release note.")
+
         }
 
-        return project.projectDir.absolutePath + "/lastBetaBuildNotes.txt"
+        return lastbuildNote.toString()
     }
 
     private File getVersionFile() {
 
-        def versionPropsFile = project.file(project.projectDir.absolutePath + '/version.properties')
+        String path = project.projectDir.absolutePath + '/autoVersion/version.properties'
+
+        File versionPropsFile = new File(path)
 
         if (!versionPropsFile.exists()){
-            versionPropsFile = new File(project.projectDir.absolutePath + '/version.properties').withWriterAppend { w ->
-                w << ""
-            }
+
+            versionPropsFile.parentFile.mkdirs()
+            versionPropsFile.createNewFile()
+            versionPropsFile.write("#Initial empty AutoVersion props\nVERSION_CODE=0\nVERSION_NAME=0.0.1")
+
         }
 
         return versionPropsFile
@@ -124,6 +135,7 @@ class AutoVersionTask extends DefaultTask {
 
     private Properties versionProperties
     private File propsFile
+    private File lastBuildReleaseNotes
 
     boolean autoVersion = false
 
@@ -132,15 +144,16 @@ class AutoVersionTask extends DefaultTask {
 
         if (!autoVersion) return
 
-        if(checkAndInit(versionProperties) | checkVersionChanges(versionProperties)) {
+        checkVersionChanges()
 
-            versionProperties.store(propsFile.newWriter(), null)
-
-        }
     }
 
     void setAutoVersion(boolean autoVersion) {
         this.autoVersion = autoVersion
+    }
+
+    void setLastBuildReleaseNotes(File file) {
+        this.lastBuildReleaseNotes = file
     }
 
     void setPropsFile(File propsFile) {
@@ -156,29 +169,16 @@ class AutoVersionTask extends DefaultTask {
         this.versionProperties = versionProperties
     }
 
-    private static boolean checkAndInit(Properties properties) {
+    private void checkVersionChanges() {
 
-        def changed = false
+        Integer[] versions = versionProperties["VERSION_NAME"].toString()
+                .split("\\.")
+                .collect { it.toInteger() }
+        Integer currentVersionCode = versionProperties["VERSION_CODE"].toString().toInteger()
 
-        if (properties["VERSION_NAME"] == null){
-            properties["VERSION_NAME"] = "0.0.0"
-            changed = true
-        }
+        boolean cancelled = true
 
-        if (properties["VERSION_CODE"] == null){
-            properties["VERSION_CODE"] = "1"
-            changed = true
-        }
-
-        return changed
-    }
-
-    private static boolean checkVersionChanges(Properties properties) {
-
-        String[] versions = properties["VERSION_NAME"].toString().split("\\.")
-
-        boolean cancelled = false
-        boolean changed = true
+        String lastBuildNotes = lastBuildReleaseNotes.readLines().join("\n")
 
         new SwingBuilder().edt {
 
@@ -191,50 +191,138 @@ class AutoVersionTask extends DefaultTask {
                     show: true // Let's show it
             ) {
 
+                def releaseNotesInput
+                def newVersionLabel
+
+                Integer[] increments = [0, 0, 0, 1]
+
+                def updateVersion = {
+
+                    String global = versions[0].toInteger() + increments[0]
+                    String major = versions[1].toInteger() + increments[1]
+                    String minor = versions[2].toInteger() + increments[2]
+                    String build = currentVersionCode + increments[3]
+
+                    newVersionLabel.text = "New version: $global.$major.$minor($build)"
+                }
+
                 vbox { // Put everything below each other
-                    label(text: "What version changes?")
-                    button(text: 'Global (1.x.x)', actionPerformed: {
-                        versions[0] = String.valueOf(versions[0].toInteger() + 1)
-                        versions[1] = "0"
-                        versions[2] = "0"
-                        dispose() // Close dialog
-                    })
-                    button(text: 'Major (x.1.x)', actionPerformed: {
-                        versions[1] = String.valueOf(versions[1].toInteger() + 1)
-                        versions[2] = "0"
-                        dispose() // Close dialog
-                    })
-                    button(text: 'Minor (x.x.1)', actionPerformed: {
-                        versions[2] = String.valueOf(versions[2].toInteger() + 1)
-                        dispose() // Close dialog
-                    })
-                    button(defaultButton: true, text: 'Internal (only buildNumber)', actionPerformed: {
-                        dispose() // Close dialog
-                    })
-                    button(text: 'Same (nothing)', actionPerformed: {
-                        changed = false
-                        dispose() // Close dialog
-                    })
-                    button(text: 'Cancel', actionPerformed: {
-                        cancelled = true
-                        dispose() // Close dialog
-                    })
+
+                    hbox {
+                        label text: "Current version: ${versions.join(".")}($currentVersionCode)"
+                    }
+
+                    hbox {
+                        label text: "What version changes?"
+                    }
+
+
+                    hbox {
+
+                        button text: '1.x.x', actionPerformed: {
+                            increments[0] = increments[0] + 1
+                            updateVersion() // Close dialog
+                        }
+
+                        button text: 'x.1.x', actionPerformed: {
+                            increments[1] = increments[1] + 1
+                            updateVersion() // Close dialog
+                        }
+
+                        button text: 'x.x.1', actionPerformed: {
+                            increments[2] = increments[2] + 1
+                            updateVersion() // Close dialog
+                        }
+
+                    }
+
+                    hbox {
+
+                        button text: '0.x.x', actionPerformed: {
+                            increments[0] = -versions[0]
+                            updateVersion()
+                        }
+
+                        button text: 'x.0.x', actionPerformed: {
+                            increments[1] = -versions[1]
+                            updateVersion()
+                        }
+
+                        button text: 'x.x.0', actionPerformed: {
+                            increments[2] = -versions[2]
+                            updateVersion()
+                        }
+
+                    }
+
+                    hbox {
+
+                        button text: 'Build number', actionPerformed: {
+                            increments[3] = increments[3] + 1
+                            updateVersion() // Close dialog
+                        }
+
+                        button text: 'Reset', actionPerformed: {
+                            increments[0] = 0
+                            increments[1] = 0
+                            increments[2] = 0
+                            increments[3] = 1
+
+                            updateVersion() // Close dialog
+                        }
+                    }
+
+                    hbox {
+                        newVersionLabel = label text: ""
+                        updateVersion()
+                    }
+
+                    hbox {
+                        releaseTitle = label text: 'Release notes:'
+                    }
+
+                    releaseNotesInput = textArea text: lastBuildNotes, preferredSize: [400, 300]
+
+                    hbox {
+
+                        button text: 'Ok', actionPerformed: {
+
+                            versions[0] = versions[0] + increments[0]
+                            versions[1] = versions[1].toInteger() + increments[1]
+                            versions[2] = versions[2].toInteger() + increments[2]
+
+                            currentVersionCode = currentVersionCode + increments[3]
+
+                            lastBuildNotes = releaseNotesInput.text
+
+                            cancelled = false
+
+                            dispose()
+                        }
+
+                        button text: 'Cancel', actionPerformed: {
+                            cancelled = true
+                            dispose() // Close dialog
+                        }
+
+                    }
+
                 } // vbox end
 
             } // dialog end
 
         } // edt end
 
+
         if (cancelled){
             throw new Exception("Cancelled.")
         }
 
-        if (changed) {
-            properties["VERSION_NAME"] = versions.join(".")
-            properties["VERSION_CODE"] = String.valueOf(properties["VERSION_CODE"].toString().toInteger() + 1)
-        }
+        versionProperties["VERSION_NAME"] = versions.join(".")
+        versionProperties["VERSION_CODE"] = String.valueOf(currentVersionCode)
 
-        return changed
+        versionProperties.store(propsFile.newWriter(), null)
+        lastBuildReleaseNotes.write(lastBuildNotes)
 
     }
 
