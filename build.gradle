@@ -1,3 +1,8 @@
+
+plugins {
+    id "com.gradle.plugin-publish" version "0.9.7"
+}
+
 apply plugin: 'groovy'
 apply plugin: 'maven'
 
@@ -9,14 +14,31 @@ dependencies {
 sourceCompatibility = "1.7"
 targetCompatibility = "1.7"
 
-
-group='me.sunnydaydev.gradle.plugins'
-version='0.0.1'
-
 uploadArchives {
     repositories {
         mavenDeployer {
             repository(url: uri('../repo'))
         }
     }
+}
+
+group='me.sunnydaydev.gradle.plugins'
+version='0.0.1'
+
+pluginBundle {
+
+    plugins {
+
+        website = 'https://sunnydaydev.me/'
+        description = 'Autoversion android build'
+        vcsUrl = 'https://gitlab.com/sunnyday.development/Gradle.AutoVersion'
+        tags = ['android']
+
+        downloadedPlugin {
+            id = 'me.sunnydaydev.autoversion'
+            displayName = 'AutoVersion'
+        }
+
+    }
+
 }
