@@ -1,135 +1,8 @@
+package me.sunnydaydev.autoversion
+
 import groovy.swing.SwingBuilder
-import org.gradle.api.provider.PropertyState
-
-apply plugin: AutoVersionPlugin
-
-class AutoVersionPlugin implements Plugin<Project> {
-
-    Project project
-
-    @Override
-    void apply(Project project) {
-
-        this.project = project
-
-        AutoVersionExtension extension = project.extensions.create('autoVersion', AutoVersionExtension, project)
-
-        extension.plugin = this
-
-        AutoVersionTask prepeareAutoVersion = project.tasks.create('prepeareAutoVersion', AutoVersionTask) {
-            propsFile = getVersionFile()
-            lastBuildReleaseNotes = new File(getLastBuildReleaseNoteFile())
-        }
-
-        project.tasks.findByName("preBuild").dependsOn prepeareAutoVersion
-
-        project.gradle.taskGraph.whenReady { graph ->
-
-            prepeareAutoVersion.autoVersion = graph.allTasks
-                    .any { task -> task.name in extension.autoVersionForTasks }
-
-        }
-
-    }
-
-    int getIncrementalVersionCode() {
-
-        Properties versionProperties = new Properties()
-        File propsFile = getVersionFile()
-
-        if(propsFile.exists()) {
-            versionProperties.load(new FileInputStream(propsFile))
-        } else {
-            throw new IllegalStateException("Signing properties file not exist! File: " + propsFile.absolutePath)
-        }
-
-        Integer code = versionProperties["VERSION_CODE"].toString().toInteger()
-
-        return code > 0 ? code : 1
-    }
-
-    String getIncrementalVersionName() {
-
-        Properties versionProperties = new Properties()
-        File propsFile = getVersionFile()
-
-        if(propsFile.exists()) {
-            versionProperties.load(new FileInputStream(propsFile))
-        } else {
-            throw new IllegalStateException("Signing properties file not exist! File: " + propsFile.absolutePath)
-        }
-
-        return versionProperties["VERSION_NAME"]
-    }
-
-    String getLastBuildReleaseNoteFile() {
-
-        String path = project.projectDir.absolutePath + "/autoVersion/lastBetaBuildNotes.txt"
-
-        File lastbuildNote = new File(path)
-
-        if (!lastbuildNote.exists()) {
-
-            lastbuildNote.parentFile.mkdirs()
-            lastbuildNote.createNewFile()
-            lastbuildNote.write("Initial release note.")
-
-        }
-
-        return lastbuildNote.toString()
-    }
-
-    private File getVersionFile() {
-
-        String path = project.projectDir.absolutePath + '/autoVersion/version.properties'
-
-        File versionPropsFile = new File(path)
-
-        if (!versionPropsFile.exists()){
-
-            versionPropsFile.parentFile.mkdirs()
-            versionPropsFile.createNewFile()
-            versionPropsFile.write("#Initial empty AutoVersion props\nVERSION_CODE=0\nVERSION_NAME=0.0.1")
-
-        }
-
-        return versionPropsFile
-    }
-
-}
-
-class AutoVersionExtension {
-
-    private final PropertyState<String[]> autoVersionForTasks
-
-    AutoVersionPlugin plugin
-
-    AutoVersionExtension(Project project) {
-        autoVersionForTasks = project.property(Task[])
-        autoVersionForTasks.set([])
-    }
-
-    String[] getAutoVersionForTasks() {
-        autoVersionForTasks.get()
-    }
-
-    void setAutoVersionForTasks(String[] tasks) {
-        autoVersionForTasks.set(tasks)
-    }
-
-    Integer getIncrementalVersionCode() {
-        plugin.incrementalVersionCode
-    }
-
-    String getIncrementalVersionName() {
-        plugin.incrementalVersionName
-    }
-
-    String getLastBuildReleaseNoteFile() {
-        plugin.lastBuildReleaseNoteFile
-    }
-
-}
+import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.TaskAction
 
 class AutoVersionTask extends DefaultTask {
 
@@ -140,11 +13,11 @@ class AutoVersionTask extends DefaultTask {
     boolean autoVersion = false
 
     @TaskAction
-    def update() {
+    void update() {
 
         if (!autoVersion) return
 
-        checkVersionChanges()
+        updateVersion()
 
     }
 
@@ -169,7 +42,7 @@ class AutoVersionTask extends DefaultTask {
         this.versionProperties = versionProperties
     }
 
-    private void checkVersionChanges() {
+    private void updateVersion() {
 
         Integer[] versions = versionProperties["VERSION_NAME"].toString()
                 .split("\\.")
@@ -203,13 +76,13 @@ class AutoVersionTask extends DefaultTask {
                     String minor = versions[2].toInteger() + increments[2]
                     String build = currentVersionCode + increments[3]
 
-                    newVersionLabel.text = "New version: $global.$major.$minor($build)"
+                    newVersionLabel.text = "New version: $global.$major.$minor ($build)"
                 }
 
-                vbox { // Put everything below each other
+                vbox {
 
                     hbox {
-                        label text: "Current version: ${versions.join(".")}($currentVersionCode)"
+                        label text: "Current version: ${versions.join(".")} ($currentVersionCode)"
                     }
 
                     hbox {
@@ -259,7 +132,16 @@ class AutoVersionTask extends DefaultTask {
 
                         button text: 'Build number', actionPerformed: {
                             increments[3] = increments[3] + 1
-                            updateVersion() // Close dialog
+                            updateVersion()
+                        }
+
+                        button text: 'Nothing Changed', actionPerformed: {
+                            increments[0] = 0
+                            increments[1] = 0
+                            increments[2] = 0
+                            increments[3] = 0
+
+                            updateVersion()
                         }
 
                         button text: 'Reset', actionPerformed: {
@@ -268,7 +150,7 @@ class AutoVersionTask extends DefaultTask {
                             increments[2] = 0
                             increments[3] = 1
 
-                            updateVersion() // Close dialog
+                            updateVersion()
                         }
                     }
 
@@ -327,54 +209,3 @@ class AutoVersionTask extends DefaultTask {
     }
 
 }
-
-/**
- * Result apk naming.
- */
-
-/*
- * Result apk naming.
- */
-/*
-android.applicationVariants.all { variant ->
-    def appName
-    //Check if an applicationName property is supplied; if not use the name of the parent project.
-    if (project.hasProperty("applicationName")) {
-        appName = applicationName
-    } else {
-        appName = parent.name
-    }
-
-    variant.outputs.each { output ->
-        def newApkName
-        //If there's no ZipAlign task it means that our artifact will be unaligned and we need to mark it as such.
-        if (output.zipAlign) {
-            newApkName = "${appName}-${project.name}-${output.baseName}-${variant.versionName}-b${variant.versionCode}.apk"
-        } else {
-            newApkName = "${appName}-${project.name}-${output.baseName}-${variant.versionName}-b${variant.versionCode}-unaligned.apk"
-        }
-        output.outputFile = new File(output.outputFile.parent, newApkName)
-    }
-}
-*/
-/*android.applicationVariants.all { variant ->
-
-    def appName
-    //Check if an applicationName property is supplied; if not use the name of the parent project.
-    if (project.hasProperty("applicationName")) {
-        appName = applicationName
-    } else {
-        appName = parent.name
-    }
-
-    variant.outputs.all { output ->
-        def newApkName
-        //If there's no ZipAlign task it means that our artifact will be unaligned and we need to mark it as such.
-        if (output.zipAlign) {
-            newApkName = "${appName}-${project.name}-${output.baseName}-${variant.versionName}-b${variant.versionCode}.apk"
-        } else {
-            newApkName = "${appName}-${project.name}-${output.baseName}-${variant.versionName}-b${variant.versionCode}-unaligned.apk"
-        }
-        outputFileName = newApkName
-    }
-}*/
