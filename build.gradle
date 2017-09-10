@@ -7,8 +7,8 @@ apply plugin: 'groovy'
 apply plugin: 'maven'
 
 dependencies {
-    compile gradleApi()
-    compile localGroovy()
+    implementation gradleApi()
+    implementation localGroovy()
 }
 
 sourceCompatibility = "1.7"
@@ -29,14 +29,16 @@ pluginBundle {
 
     plugins {
 
-        website = 'https://sunnydaydev.me/'
-        description = 'Autoversion android build'
-        vcsUrl = 'https://gitlab.com/sunnyday.development/Gradle.AutoVersion'
-        tags = ['android']
+        autoversionPlugin {
 
-        downloadedPlugin {
             id = 'me.sunnydaydev.autoversion'
             displayName = 'AutoVersion'
+
+            website = 'https://sunnydaydev.me/'
+            description = 'Autoversion android build'
+            vcsUrl = 'https://github.com/SunnyDayDev/AutoVersion'
+            tags = ['android']
+
         }
 
     }
