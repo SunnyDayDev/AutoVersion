@@ -12,7 +12,7 @@ Add to your build.gradle:
     
     ...
     
-    autoVersoin {
+    autoVersion {
         
         autoVersionForTasks "assembleRelease", "assembleBetaRelease" // Any tasks which need to prepeare version
         
