@@ -57,8 +57,8 @@ uploadArchives {
                 name 'AutoVersion'
                 packaging 'jar'
                 // optionally artifactId can be defined here
-                //description ''
-                //url 'http://www.example.com/example-application'
+                description 'Automated handling of version code, name and release notes for Android.'
+                url 'https://github.com/SunnyDayDev/AutoVersion'
 
                 scm {
                     //connection 'scm:svn:http://foo.googlecode.com/svn/trunk/'
