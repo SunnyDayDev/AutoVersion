@@ -5,6 +5,7 @@ plugins {
 
 apply plugin: 'groovy'
 apply plugin: 'maven'
+apply plugin: 'signing'
 
 dependencies {
     implementation gradleApi()
@@ -14,16 +15,76 @@ dependencies {
 sourceCompatibility = "1.7"
 targetCompatibility = "1.7"
 
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            repository(url: uri('../repo'))
-        }
-    }
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
 }
 
-group='me.sunnydaydev.gradle.plugins'
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
+signing {
+    sign configurations.archives
+}
+
+group='me.sunnydaydev'
+archivesBaseName = "autoversion"
 version='0.0.1'
+
+uploadArchives {
+
+    repositories {
+
+        mavenDeployer {
+
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            pom.project {
+                name 'AutoVersion'
+                packaging 'jar'
+                // optionally artifactId can be defined here
+                //description ''
+                //url 'http://www.example.com/example-application'
+
+                scm {
+                    //connection 'scm:svn:http://foo.googlecode.com/svn/trunk/'
+                    //developerConnection 'scm:svn:https://foo.googlecode.com/svn/trunk/'
+                    url 'https://github.com/SunnyDayDev/AutoVersion'
+                }
+
+                licenses {
+                    license {
+                        name 'The Apache License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'sunnydaydev'
+                        name 'Aleksandr Tcikin'
+                        email 'mail@sunnydaydev.me'
+                    }
+                }
+            }
+        }
+    }
+
+}
 
 pluginBundle {
 
