@@ -2,8 +2,12 @@ package me.sunnydaydev.autoversion
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.Task
 
 class AutoVersionPlugin implements Plugin<Project> {
+
+    private static final String PREPEARE_AUTO_VERSION = 'prepeareAutoVersion'
+    private static final String AUTO_VERSION = 'autoVersion'
 
     Project project
 
@@ -12,24 +16,41 @@ class AutoVersionPlugin implements Plugin<Project> {
 
         this.project = project
 
-        AutoVersionExtension extension = project.extensions.create('autoVersion', AutoVersionExtension)//, project)
+        AutoVersionExtension extension = project.extensions.create(AUTO_VERSION, AutoVersionExtension)//, project)
         //AutoVersionExtension extension = project.extensions.add('autoVersion', AutoVersionExtension)
 
         extension.plugin = this
 
-        AutoVersionTask prepeareAutoVersion = project.tasks.create('prepeareAutoVersion', AutoVersionTask) {
+        AutoVersionTask prepeareAutoVersion = project.tasks.create(PREPEARE_AUTO_VERSION, AutoVersionTask) {
+
             it.propsFile = getVersionFile()
             it.lastBuildReleaseNotes = new File(getLastBuildReleaseNoteFile())
+
         }
+
+        prepeareAutoVersion.group = AUTO_VERSION
+        prepeareAutoVersion.description = "Prepeare version."
 
         project.gradle.taskGraph.whenReady { graph ->
 
-            prepeareAutoVersion.autoVersion = graph.allTasks
-                    .any { task -> task.name in extension.autoVersionForTasks }
+            List<Task> tasks = graph.allTasks
+
+            if (tasks.size() > 1) {
+
+                prepeareAutoVersion.autoVersion = tasks.any {
+                    task -> task.name in extension.autoVersionForTasks
+                }
+
+            } else {
+
+                prepeareAutoVersion.autoVersion = tasks.size() == 1 && tasks.get(0).name == PREPEARE_AUTO_VERSION
+
+            }
 
         }
 
         project.tasks.findByName("preBuild").dependsOn prepeareAutoVersion
+        
     }
 
     int getIncrementalVersionCode() {
