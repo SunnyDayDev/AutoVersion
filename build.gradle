@@ -1,3 +1,4 @@
+import groovy.swing.SwingBuilder
 
 plugins {
     id "com.gradle.plugin-publish" version "0.9.7"
@@ -35,52 +36,195 @@ signing {
 
 group='me.sunnydaydev'
 archivesBaseName = "autoversion"
-version='0.0.1'
+version='0.0.2'
 
 uploadArchives {
 
     repositories {
 
-        mavenDeployer {
+        int MAVEN = 0
+        int LOCAL = 1
+        int SAMPLE = 2
 
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+        int where = MAVEN
 
-            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
+        boolean checkWhere = project.gradle.startParameter.taskNames.contains('uploadArchives')
 
-            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
+        if (checkWhere) {
 
-            pom.project {
-                name 'AutoVersion'
-                packaging 'jar'
-                // optionally artifactId can be defined here
-                description 'Automated handling of version code, name and release notes for Android.'
-                url 'https://github.com/SunnyDayDev/AutoVersion'
+            boolean cancelled = true
 
-                scm {
-                    //connection 'scm:svn:http://foo.googlecode.com/svn/trunk/'
-                    //developerConnection 'scm:svn:https://foo.googlecode.com/svn/trunk/'
-                    url 'https://github.com/SunnyDayDev/AutoVersion'
+            new SwingBuilder().edt {
+
+                dialog(modal: true, // Otherwise the build will continue running before you closed the dialog
+                        title: 'Build version.', // Dialog title
+                        alwaysOnTop: true, // pretty much what the name says
+                        resizable: false, // Don't allow the user to resize the dialog
+                        locationRelativeTo: null, // Place dialog in center of the screen
+                        pack: true, // We need to pack the dialog (so it will take the size of it's children)
+                        show: true // Let's show it
+                ) {
+
+                    vbox {
+
+                        label text: "Where to upload?"
+
+                        hbox {
+
+                            button defaultButton: true, text: 'Maven Central', actionPerformed: {
+                                cancelled = false
+                                dispose()
+                            }
+
+                            button defaultButton: true, text: 'Local', actionPerformed: {
+                                cancelled = false
+                                where = LOCAL
+                                dispose()
+                            }
+
+                            button defaultButton: true, text: 'Samle', actionPerformed: {
+                                cancelled = false
+                                where = SAMPLE
+                                dispose()
+                            }
+
+                        }
+
+                    }
+
                 }
 
-                licenses {
-                    license {
-                        name 'The Apache License, Version 2.0'
-                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+            }
+
+            if (cancelled) {
+                throw new Exception("Cancelled.")
+            }
+
+        }
+
+        switch (where) {
+
+            case MAVEN:
+
+                mavenDeployer {
+
+                    beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+                    repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2") {
+                        authentication(userName: ossrhUsername, password: ossrhPassword)
+                    }
+
+                    snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots") {
+                        authentication(userName: ossrhUsername, password: ossrhPassword)
+                    }
+
+                    pom.project {
+                        name 'AutoVersion'
+                        packaging 'jar'
+                        // optionally artifactId can be defined here
+                        description 'Automated handling of version code, name and release notes for Android.'
+                        url 'https://github.com/SunnyDayDev/AutoVersion'
+
+                        scm {
+                            //connection 'scm:svn:http://foo.googlecode.com/svn/trunk/'
+                            //developerConnection 'scm:svn:https://foo.googlecode.com/svn/trunk/'
+                            url 'https://github.com/SunnyDayDev/AutoVersion'
+                        }
+
+                        licenses {
+                            license {
+                                name 'The Apache License, Version 2.0'
+                                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                            }
+                        }
+
+                        developers {
+                            developer {
+                                id 'sunnydaydev'
+                                name 'Aleksandr Tcikin'
+                                email 'mail@sunnydaydev.me'
+                            }
+                        }
                     }
                 }
 
-                developers {
-                    developer {
-                        id 'sunnydaydev'
-                        name 'Aleksandr Tcikin'
-                        email 'mail@sunnydaydev.me'
+                break
+
+            case LOCAL:
+
+                mavenDeployer {
+
+                    repository(url: mavenLocal().url)
+
+                    pom.project {
+                        name 'AutoVersion'
+                        packaging 'jar'
+                        // optionally artifactId can be defined here
+                        description 'Automated handling of version code, name and release notes for Android.'
+                        url 'https://github.com/SunnyDayDev/AutoVersion'
+
+                        scm {
+                            //connection 'scm:svn:http://foo.googlecode.com/svn/trunk/'
+                            //developerConnection 'scm:svn:https://foo.googlecode.com/svn/trunk/'
+                            url 'https://github.com/SunnyDayDev/AutoVersion'
+                        }
+
+                        licenses {
+                            license {
+                                name 'The Apache License, Version 2.0'
+                                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                            }
+                        }
+
+                        developers {
+                            developer {
+                                id 'sunnydaydev'
+                                name 'Aleksandr Tcikin'
+                                email 'mail@sunnydaydev.me'
+                            }
+                        }
                     }
                 }
-            }
+
+                break
+
+            case SAMPLE:
+
+                mavenDeployer {
+
+                    repository(url: uri('sample/repo'))
+
+                    pom.project {
+                        name 'AutoVersion'
+                        packaging 'jar'
+                        // optionally artifactId can be defined here
+                        description 'Automated handling of version code, name and release notes for Android.'
+                        url 'https://github.com/SunnyDayDev/AutoVersion'
+
+                        scm {
+                            //connection 'scm:svn:http://foo.googlecode.com/svn/trunk/'
+                            //developerConnection 'scm:svn:https://foo.googlecode.com/svn/trunk/'
+                            url 'https://github.com/SunnyDayDev/AutoVersion'
+                        }
+
+                        licenses {
+                            license {
+                                name 'The Apache License, Version 2.0'
+                                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                            }
+                        }
+
+                        developers {
+                            developer {
+                                id 'sunnydaydev'
+                                name 'Aleksandr Tcikin'
+                                email 'mail@sunnydaydev.me'
+                            }
+                        }
+                    }
+                }
+
+                break
         }
     }
 

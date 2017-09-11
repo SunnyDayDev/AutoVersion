@@ -50,7 +50,7 @@ class AutoVersionPlugin implements Plugin<Project> {
         }
 
         project.tasks.findByName("preBuild").dependsOn prepeareAutoVersion
-        
+
     }
 
     int getIncrementalVersionCode() {
