@@ -102,6 +102,39 @@ uploadArchives {
 
         }
 
+        def prepearePom = { pom ->
+
+            pom.project {
+                name 'AutoVersion'
+                packaging 'jar'
+                // optionally artifactId can be defined here
+                description 'Automated handling of version code, name and release notes for Android.'
+                url 'https://github.com/SunnyDayDev/AutoVersion'
+
+                scm {
+                    //connection 'scm:svn:http://foo.googlecode.com/svn/trunk/'
+                    //developerConnection 'scm:svn:https://foo.googlecode.com/svn/trunk/'
+                    url 'https://github.com/SunnyDayDev/AutoVersion'
+                }
+
+                licenses {
+                    license {
+                        name 'The Apache License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'sunnydaydev'
+                        name 'Aleksandr Tcikin'
+                        email 'mail@sunnydaydev.me'
+                    }
+                }
+            }
+
+        }
+
         switch (where) {
 
             case MAVEN:
@@ -118,34 +151,8 @@ uploadArchives {
                         authentication(userName: ossrhUsername, password: ossrhPassword)
                     }
 
-                    pom.project {
-                        name 'AutoVersion'
-                        packaging 'jar'
-                        // optionally artifactId can be defined here
-                        description 'Automated handling of version code, name and release notes for Android.'
-                        url 'https://github.com/SunnyDayDev/AutoVersion'
+                    prepearePom(pom)
 
-                        scm {
-                            //connection 'scm:svn:http://foo.googlecode.com/svn/trunk/'
-                            //developerConnection 'scm:svn:https://foo.googlecode.com/svn/trunk/'
-                            url 'https://github.com/SunnyDayDev/AutoVersion'
-                        }
-
-                        licenses {
-                            license {
-                                name 'The Apache License, Version 2.0'
-                                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                            }
-                        }
-
-                        developers {
-                            developer {
-                                id 'sunnydaydev'
-                                name 'Aleksandr Tcikin'
-                                email 'mail@sunnydaydev.me'
-                            }
-                        }
-                    }
                 }
 
                 break
@@ -155,35 +162,8 @@ uploadArchives {
                 mavenDeployer {
 
                     repository(url: mavenLocal().url)
+                    prepearePom(pom)
 
-                    pom.project {
-                        name 'AutoVersion'
-                        packaging 'jar'
-                        // optionally artifactId can be defined here
-                        description 'Automated handling of version code, name and release notes for Android.'
-                        url 'https://github.com/SunnyDayDev/AutoVersion'
-
-                        scm {
-                            //connection 'scm:svn:http://foo.googlecode.com/svn/trunk/'
-                            //developerConnection 'scm:svn:https://foo.googlecode.com/svn/trunk/'
-                            url 'https://github.com/SunnyDayDev/AutoVersion'
-                        }
-
-                        licenses {
-                            license {
-                                name 'The Apache License, Version 2.0'
-                                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                            }
-                        }
-
-                        developers {
-                            developer {
-                                id 'sunnydaydev'
-                                name 'Aleksandr Tcikin'
-                                email 'mail@sunnydaydev.me'
-                            }
-                        }
-                    }
                 }
 
                 break
@@ -193,35 +173,8 @@ uploadArchives {
                 mavenDeployer {
 
                     repository(url: uri('sample/repo'))
+                    prepearePom(pom)
 
-                    pom.project {
-                        name 'AutoVersion'
-                        packaging 'jar'
-                        // optionally artifactId can be defined here
-                        description 'Automated handling of version code, name and release notes for Android.'
-                        url 'https://github.com/SunnyDayDev/AutoVersion'
-
-                        scm {
-                            //connection 'scm:svn:http://foo.googlecode.com/svn/trunk/'
-                            //developerConnection 'scm:svn:https://foo.googlecode.com/svn/trunk/'
-                            url 'https://github.com/SunnyDayDev/AutoVersion'
-                        }
-
-                        licenses {
-                            license {
-                                name 'The Apache License, Version 2.0'
-                                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                            }
-                        }
-
-                        developers {
-                            developer {
-                                id 'sunnydaydev'
-                                name 'Aleksandr Tcikin'
-                                email 'mail@sunnydaydev.me'
-                            }
-                        }
-                    }
                 }
 
                 break
