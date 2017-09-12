@@ -10,6 +10,17 @@ Add to your build.gradle:
 
     apply plugin: 'me.sunnydaydev.autoversion'
     
+    buildscript {
+
+        repositories {
+            mavenCentral()
+        }
+
+        dependencies {
+            classpath 'me.sunnydaydev:autoversion:0.0.3'
+        }
+    }
+    
     ...
     
     autoVersion {
