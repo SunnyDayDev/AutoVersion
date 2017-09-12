@@ -8,9 +8,16 @@ apply plugin: 'groovy'
 apply plugin: 'maven'
 apply plugin: 'signing'
 
+//repositories {
+    //google()
+    //jcenter()
+//}
+
 dependencies {
     implementation gradleApi()
     implementation localGroovy()
+
+    //implementation 'com.android.tools.build:gradle:2.3.3'
 }
 
 sourceCompatibility = "1.7"
@@ -36,7 +43,7 @@ signing {
 
 group='me.sunnydaydev'
 archivesBaseName = "autoversion"
-version='0.0.2'
+version='0.0.3'
 
 uploadArchives {
 

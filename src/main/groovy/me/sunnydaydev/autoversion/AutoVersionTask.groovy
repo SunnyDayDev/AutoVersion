@@ -10,19 +10,32 @@ class AutoVersionTask extends DefaultTask {
     private File propsFile
     private File lastBuildReleaseNotes
 
-    boolean autoVersion = false
+    private AutoVersionExtension extension
 
     @TaskAction
     void update() {
 
-        if (!autoVersion) return
+        boolean needPrepareVersion = project.gradle.startParameter.taskNames.any {
 
-        updateVersion()
+            String[] taskNamePaths = it.split(":")
+            String taskName = taskNamePaths[taskNamePaths.length -1]
+
+            extension.autoVersionForTasks.contains(taskName)
+
+        }
+
+        if (!needPrepareVersion) return
+
+        prepareVersion()
 
     }
 
-    void setAutoVersion(boolean autoVersion) {
-        this.autoVersion = autoVersion
+    void setExtension(AutoVersionExtension extension) {
+        this.extension = extension
+    }
+
+    AutoVersionExtension getExtension() {
+        return this.extension
     }
 
     void setLastBuildReleaseNotes(File file) {
@@ -42,7 +55,7 @@ class AutoVersionTask extends DefaultTask {
         this.versionProperties = versionProperties
     }
 
-    private void updateVersion() {
+    private void prepareVersion() {
 
         Integer[] versions = versionProperties["VERSION_NAME"].toString()
                 .split("\\.")

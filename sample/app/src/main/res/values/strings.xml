@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">AutoVersion Sample</string>
+    <string name="prompt__version_name__string_format">Version name: %s</string>
+    <string name="prompt__version_code__int_format">Version code: %d</string>
 </resources>

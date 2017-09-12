@@ -14,8 +14,23 @@ Add to your build.gradle:
     
     autoVersion {
         
-        autoVersionForTasks "assembleRelease", "assembleBetaRelease" // Any tasks which need to prepeare version
+        prepareVersionOnTasks "assembleRelease", "assembleBetaRelease" // Any tasks which need to prepeare version
         
+    }
+
+    android {
+
+        ...
+
+        defaultConfig {
+
+            versionCode autoVersion.versionCode
+            versionName autoVersion.versionName
+
+            ...
+
+        }
+
     }
     
 }

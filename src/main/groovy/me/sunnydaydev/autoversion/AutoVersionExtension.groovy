@@ -1,8 +1,5 @@
 package me.sunnydaydev.autoversion
 
-import org.gradle.api.Project
-import org.gradle.api.provider.PropertyState
-
 class AutoVersionExtension {
 
     private String[] autoVersionForTasks
@@ -13,19 +10,19 @@ class AutoVersionExtension {
         autoVersionForTasks
     }
 
-    void setAutoVersionForTasks(String[] tasks) {
+    void setPrepareVersionOnTasks(String[] tasks) {
         autoVersionForTasks = tasks
     }
 
-    Integer getIncrementalVersionCode() {
+    Integer getVersionCode() {
         plugin.incrementalVersionCode
     }
 
-    String getIncrementalVersionName() {
+    String getVersionName() {
         plugin.incrementalVersionName
     }
 
-    String getLastBuildReleaseNoteFile() {
+    String getReleaseNoteFilePath() {
         plugin.lastBuildReleaseNoteFile
     }
 

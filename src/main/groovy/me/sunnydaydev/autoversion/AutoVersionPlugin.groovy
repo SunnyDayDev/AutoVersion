@@ -2,7 +2,6 @@ package me.sunnydaydev.autoversion
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.Task
 
 class AutoVersionPlugin implements Plugin<Project> {
 
@@ -11,45 +10,64 @@ class AutoVersionPlugin implements Plugin<Project> {
 
     Project project
 
+    private AutoVersionExtension autoVersionExtension
+
     @Override
     void apply(Project project) {
 
         this.project = project
 
-        AutoVersionExtension extension = project.extensions.create(AUTO_VERSION, AutoVersionExtension)//, project)
-        //AutoVersionExtension extension = project.extensions.add('autoVersion', AutoVersionExtension)
+        autoVersionExtension = project.extensions.create(AUTO_VERSION, AutoVersionExtension)
 
-        extension.plugin = this
+        autoVersionExtension.plugin = this
 
         AutoVersionTask prepeareAutoVersion = project.tasks.create(PREPEARE_AUTO_VERSION, AutoVersionTask) {
 
             it.propsFile = getVersionFile()
             it.lastBuildReleaseNotes = new File(getLastBuildReleaseNoteFile())
+            it.extension = autoVersionExtension
 
         }
 
         prepeareAutoVersion.group = AUTO_VERSION
         prepeareAutoVersion.description = "Prepeare version."
 
-        project.gradle.taskGraph.whenReady { graph ->
+        project.afterEvaluate {
 
-            List<Task> tasks = graph.allTasks
+            def androidExtension = project.extensions.findByName("android")
 
-            if (tasks.size() > 1) {
+            if (androidExtension == null) return
 
-                prepeareAutoVersion.autoVersion = tasks.any {
-                    task -> task.name in extension.autoVersionForTasks
+            def prepareVariants = { variants ->
+
+                variants.all { variant ->
+
+                    variant.preBuild.dependsOn prepeareAutoVersion
+
+                    prepeareAutoVersion.doLast {
+
+                        variant.mergedFlavor.versionName = incrementalVersionName
+                        variant.mergedFlavor.versionCode = incrementalVersionCode
+
+                    }
+
                 }
 
-            } else {
+            }
 
-                prepeareAutoVersion.autoVersion = tasks.size() == 1 && tasks.get(0).name == PREPEARE_AUTO_VERSION
+            if (androidExtension.hasProperty("applicationVariants")) {
+
+                prepareVariants(androidExtension.applicationVariants)
+
+            }
+
+            if (androidExtension.hasProperty("libraryVariants")) {
+
+                prepareVariants(androidExtension.libraryVariants)
 
             }
 
         }
-
-        project.tasks.findByName("preBuild").dependsOn prepeareAutoVersion
 
     }
 
@@ -110,7 +128,7 @@ class AutoVersionPlugin implements Plugin<Project> {
 
             versionPropsFile.parentFile.mkdirs()
             versionPropsFile.createNewFile()
-            versionPropsFile.write("#Initial empty AutoVersion props\nVERSION_CODE=0\nVERSION_NAME=0.0.1")
+            versionPropsFile.write("#Initial empty AutoVersion props\nVERSION_CODE=1\nVERSION_NAME=0.0.1")
 
         }
 
