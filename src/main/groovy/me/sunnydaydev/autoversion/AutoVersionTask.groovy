@@ -6,6 +6,8 @@ import org.gradle.api.tasks.TaskAction
 
 class AutoVersionTask extends DefaultTask {
 
+    static String NAME = "prepareAutoVersion"
+
     private Properties versionProperties
     private File propsFile
     private File lastBuildReleaseNotes
@@ -20,7 +22,7 @@ class AutoVersionTask extends DefaultTask {
             String[] taskNamePaths = it.split(":")
             String taskName = taskNamePaths[taskNamePaths.length -1]
 
-            extension.autoVersionForTasks.contains(taskName)
+            extension.autoVersionForTasks.contains(taskName) || taskName == NAME
 
         }
 
@@ -67,6 +69,9 @@ class AutoVersionTask extends DefaultTask {
         boolean cancelled = true
 
         String lastBuildNotes = lastBuildReleaseNotes.readLines().join("\n")
+
+        boolean lastBuildNotesChanged = false
+        boolean versionChanged = true
 
         new SwingBuilder().edt {
 
@@ -184,13 +189,24 @@ class AutoVersionTask extends DefaultTask {
 
                         button text: 'Ok', actionPerformed: {
 
-                            versions[0] = versions[0] + increments[0]
-                            versions[1] = versions[1].toInteger() + increments[1]
-                            versions[2] = versions[2].toInteger() + increments[2]
+                            versionChanged = increments.any { it != 0 }
 
-                            currentVersionCode = currentVersionCode + increments[3]
+                            if (versionChanged) {
 
-                            lastBuildNotes = releaseNotesInput.text
+                                versions[0] = versions[0] + increments[0]
+                                versions[1] = versions[1].toInteger() + increments[1]
+                                versions[2] = versions[2].toInteger() + increments[2]
+
+                                currentVersionCode = currentVersionCode + increments[3]
+
+                            }
+
+                            if (lastBuildNotes != releaseNotesInput.text) {
+
+                                lastBuildNotes = releaseNotesInput.text
+                                lastBuildNotesChanged = true
+
+                            }
 
                             cancelled = false
 
@@ -215,11 +231,19 @@ class AutoVersionTask extends DefaultTask {
             throw new Exception("Cancelled.")
         }
 
-        versionProperties["VERSION_NAME"] = versions.join(".")
-        versionProperties["VERSION_CODE"] = String.valueOf(currentVersionCode)
+        if (versionChanged) {
 
-        versionProperties.store(propsFile.newWriter(), null)
-        lastBuildReleaseNotes.write(lastBuildNotes)
+            versionProperties["VERSION_NAME"] = versions.join(".")
+            versionProperties["VERSION_CODE"] = String.valueOf(currentVersionCode)
+            versionProperties.store(propsFile.newWriter(), null)
+
+        }
+
+        if (lastBuildNotesChanged) {
+
+            lastBuildReleaseNotes.write(lastBuildNotes)
+
+        }
 
     }
 
