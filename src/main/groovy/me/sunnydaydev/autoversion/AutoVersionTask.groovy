@@ -26,6 +26,8 @@ class AutoVersionTask extends DefaultTask {
 
         if (!needPrepareVersion) return
 
+        System.setProperty("java.awt.headless", "false")
+
         prepareVersion()
 
     }
