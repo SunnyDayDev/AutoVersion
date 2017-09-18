@@ -6,7 +6,7 @@ import org.gradle.api.tasks.TaskAction
 
 class AutoVersionTask extends DefaultTask {
 
-    static String NAME = "prepareAutoVersion"
+    static String AUTOVERSION_TASK_NAME = "prepareAutoVersion"
 
     private Properties versionProperties
     private File propsFile
@@ -17,20 +17,72 @@ class AutoVersionTask extends DefaultTask {
     @TaskAction
     void update() {
 
-        boolean needPrepareVersion = project.gradle.startParameter.taskNames.any {
+        List<String> currentTasks = project.gradle.startParameter.taskNames.collect {
 
             String[] taskNamePaths = it.split(":")
-            String taskName = taskNamePaths[taskNamePaths.length -1]
-
-            extension.autoVersionForTasks.contains(taskName) || taskName == NAME
+            taskNamePaths[taskNamePaths.length -1]
 
         }
 
-        if (!needPrepareVersion) return
+        boolean needPrepareVersion = currentTasks.any {
 
-        System.setProperty("java.awt.headless", "false")
+            extension.autoVersionForTasks.contains(it) || it == AUTOVERSION_TASK_NAME
 
-        prepareVersion()
+        }
+
+
+        println "Current autoIncrementOnTasks $currentTasks"
+
+        AutoIncrement autoIncrement = null
+
+        if (extension.autoIncrements != null) {
+
+            println "Find in ${extension.autoIncrements.names}"
+
+            autoIncrement = extension.autoIncrements.find {
+
+                println "Find in : ${it.autoIncrementOnTasks}"
+
+                return it.autoIncrementOnTasks.any { currentTasks.contains(it) }
+
+            }
+
+        }
+
+        if (autoIncrement != null) {
+
+            println "Autoincrement enabled: ${autoIncrement.increments}"
+
+        } else {
+
+            println "Autoincrement disabled."
+
+        }
+
+        if (needPrepareVersion) {
+
+            System.setProperty("java.awt.headless", "false")
+
+            int[] defaultIncrements = [0,0,0,1]
+            prepareVersion(autoIncrement == null ? defaultIncrements : autoIncrement.increments)
+
+        } else if (autoIncrement != null) {
+
+            Integer[] versions = versionProperties["VERSION_NAME"].toString()
+                    .split("\\.")
+                    .collect { it.toInteger() }
+            Integer currentVersionCode = versionProperties["VERSION_CODE"].toString().toInteger()
+
+            for(int i = 0; i < 3; i++) {
+                versions[i] += autoIncrement.increments[i]
+            }
+            currentVersionCode += autoIncrement.increments[3]
+
+            versionProperties["VERSION_NAME"] = versions.join(".")
+            versionProperties["VERSION_CODE"] = String.valueOf(currentVersionCode)
+            versionProperties.store(propsFile.newWriter(), null)
+
+        }
 
     }
 
@@ -59,7 +111,7 @@ class AutoVersionTask extends DefaultTask {
         this.versionProperties = versionProperties
     }
 
-    private void prepareVersion() {
+    private void prepareVersion(int[] startIncrements) {
 
         Integer[] versions = versionProperties["VERSION_NAME"].toString()
                 .split("\\.")
@@ -87,7 +139,11 @@ class AutoVersionTask extends DefaultTask {
                 def releaseNotesInput
                 def newVersionLabel
 
-                Integer[] increments = [0, 0, 0, 1]
+                int[] increments = new int[4]
+
+                for (int i = 0; i < 4; i ++) {
+                    increments[i] = startIncrements[i]
+                }
 
                 def updateVersion = {
 
@@ -165,10 +221,10 @@ class AutoVersionTask extends DefaultTask {
                         }
 
                         button text: 'Reset', actionPerformed: {
-                            increments[0] = 0
-                            increments[1] = 0
-                            increments[2] = 0
-                            increments[3] = 1
+
+                            for (int i = 0; i < 4; i ++) {
+                                increments[i] = startIncrements[i]
+                            }
 
                             updateVersion()
                         }
