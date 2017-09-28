@@ -1,6 +1,5 @@
 package me.sunnydaydev.autoversion
 
-import org.gradle.api.NamedDomainObjectFactory
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
@@ -21,7 +20,7 @@ class AutoVersionPlugin implements Plugin<Project> {
                 AUTO_VERSION,
                 AutoVersionExtension,
                 this,
-                project.container(AutoIncrement)
+                project.container(TasksDependedIncrement)
         )
 
         AutoVersionTask prepeareAutoVersion = project.tasks

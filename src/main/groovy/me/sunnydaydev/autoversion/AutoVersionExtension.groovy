@@ -9,10 +9,12 @@ class AutoVersionExtension {
 
     AutoVersionPlugin plugin
 
-    NamedDomainObjectContainer<AutoIncrement> autoIncrements
+    NamedDomainObjectContainer<TasksDependedIncrement> autoIncrements
+
+    Increment defaultIncrement = Increment.defaultIncrement()
 
     AutoVersionExtension(AutoVersionPlugin plugin,
-                         NamedDomainObjectContainer<AutoIncrement> autoIncrements) {
+                         NamedDomainObjectContainer<TasksDependedIncrement> autoIncrements) {
         this.plugin = plugin
         this.autoIncrements = autoIncrements
     }
@@ -37,14 +39,19 @@ class AutoVersionExtension {
         plugin.lastBuildReleaseNoteFile
     }
 
-    void autoIncrements(Action<? super NamedDomainObjectContainer<AutoIncrement>> action) {
+    void defaultIncrement(Action<? super Increment> action) {
+        action.execute(defaultIncrement)
+    }
 
-        println "Set autoincrements."
+    Increment getDefaultIncrement() {
+        return defaultIncrement
+    }
 
+    void autoIncrements(Action<? super NamedDomainObjectContainer<TasksDependedIncrement>> action) {
         action.execute(autoIncrements)
     }
 
-    NamedDomainObjectContainer<AutoIncrement> getAutoIncrements() {
+    NamedDomainObjectContainer<TasksDependedIncrement> getAutoIncrements() {
         return autoIncrements
     }
 }

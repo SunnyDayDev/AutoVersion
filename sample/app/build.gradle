@@ -8,21 +8,22 @@ apply plugin: 'me.sunnydaydev.autoversion'
 
 autoVersion {
 
-    prepareVersionOnTasks "assembleDebug"
+    prepareVersionOnTasks "assembleDebug", "assembleRelease"
+
+    defaultIncrement {
+
+        increments 0, 0, 2
+        buildIncrement 1
+
+    }
 
     autoIncrements {
 
-        minor {
-
-            autoIncrementOnTasks ["assembleRelease"]
-            increments [0, 0, 1, 1]
-
-        }
-
         global {
 
-            autoIncrementOnTasks ["assembleDebug"]
-            increments [1, 0, 0, 1]
+            useOnTasks "assembleDebug"
+            increments 1, 0, 0
+            buildIncrement 2
 
         }
 

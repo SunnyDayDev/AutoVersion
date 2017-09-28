@@ -33,17 +33,13 @@ class AutoVersionTask extends DefaultTask {
 
         println "Current autoIncrementOnTasks $currentTasks"
 
-        AutoIncrement autoIncrement = null
+        TasksDependedIncrement autoIncrement = null
 
         if (extension.autoIncrements != null) {
 
-            println "Find in ${extension.autoIncrements.names}"
-
             autoIncrement = extension.autoIncrements.find {
 
-                println "Find in : ${it.autoIncrementOnTasks}"
-
-                return it.autoIncrementOnTasks.any { currentTasks.contains(it) }
+                return it.useOnTasks.any { currentTasks.contains(it) }
 
             }
 
@@ -63,8 +59,7 @@ class AutoVersionTask extends DefaultTask {
 
             System.setProperty("java.awt.headless", "false")
 
-            int[] defaultIncrements = [0,0,0,1]
-            prepareVersion(autoIncrement == null ? defaultIncrements : autoIncrement.increments)
+            prepareVersion(autoIncrement != null ? autoIncrement : extension.defaultIncrement)
 
         } else if (autoIncrement != null) {
 
@@ -76,7 +71,7 @@ class AutoVersionTask extends DefaultTask {
             for(int i = 0; i < 3; i++) {
                 versions[i] += autoIncrement.increments[i]
             }
-            currentVersionCode += autoIncrement.increments[3]
+            currentVersionCode += autoIncrement.buildIncrement
 
             versionProperties["VERSION_NAME"] = versions.join(".")
             versionProperties["VERSION_CODE"] = String.valueOf(currentVersionCode)
@@ -111,7 +106,7 @@ class AutoVersionTask extends DefaultTask {
         this.versionProperties = versionProperties
     }
 
-    private void prepareVersion(int[] startIncrements) {
+    private void prepareVersion(Increment increment) {
 
         Integer[] versions = versionProperties["VERSION_NAME"].toString()
                 .split("\\.")
@@ -141,9 +136,10 @@ class AutoVersionTask extends DefaultTask {
 
                 int[] increments = new int[4]
 
-                for (int i = 0; i < 4; i ++) {
-                    increments[i] = startIncrements[i]
+                for (int i = 0; i < 3; i ++) {
+                    increments[i] = increment.increments[i]
                 }
+                increments[3] = increment.buildIncrement
 
                 def updateVersion = {
 
