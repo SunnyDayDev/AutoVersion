@@ -1,10 +1,23 @@
 package me.sunnydaydev.autoversion
 
+import org.gradle.api.Action
+import org.gradle.api.NamedDomainObjectContainer
+
 class AutoVersionExtension {
 
-    private String[] autoVersionForTasks
+    private String[] autoVersionForTasks = []
 
     AutoVersionPlugin plugin
+
+    NamedDomainObjectContainer<TasksDependedIncrement> autoIncrements
+
+    Increment defaultIncrement = Increment.defaultIncrement()
+
+    AutoVersionExtension(AutoVersionPlugin plugin,
+                         NamedDomainObjectContainer<TasksDependedIncrement> autoIncrements) {
+        this.plugin = plugin
+        this.autoIncrements = autoIncrements
+    }
 
     String[] getAutoVersionForTasks() {
         autoVersionForTasks
@@ -26,4 +39,19 @@ class AutoVersionExtension {
         plugin.lastBuildReleaseNoteFile
     }
 
+    void defaultIncrement(Action<? super Increment> action) {
+        action.execute(defaultIncrement)
+    }
+
+    Increment getDefaultIncrement() {
+        return defaultIncrement
+    }
+
+    void autoIncrements(Action<? super NamedDomainObjectContainer<TasksDependedIncrement>> action) {
+        action.execute(autoIncrements)
+    }
+
+    NamedDomainObjectContainer<TasksDependedIncrement> getAutoIncrements() {
+        return autoIncrements
+    }
 }
