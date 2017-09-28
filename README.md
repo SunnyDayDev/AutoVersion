@@ -20,7 +20,7 @@ Add to your build.gradle:
         }
 
         dependencies {
-            classpath 'me.sunnydaydev:autoversion:0.0.3'
+            classpath 'me.sunnydaydev:autoversion:0.0.4'
         }
     }
     
@@ -58,6 +58,8 @@ After it Autoversion will show 'Prepare version name' dialog on each started tas
 Also you can set default increment value:
 ```
 autoVersion {
+    
+    prepareVersionOnTasks "assembleDebug", "assembleRelease"
 
     defaultIncrement {
 
