@@ -5,7 +5,6 @@ import org.gradle.api.Project
 
 class AutoVersionPlugin implements Plugin<Project> {
 
-    private static final String PREPEARE_AUTO_VERSION = 'prepeareAutoVersion'
     private static final String AUTO_VERSION = 'autoVersion'
 
     Project project
@@ -17,17 +16,21 @@ class AutoVersionPlugin implements Plugin<Project> {
 
         this.project = project
 
-        autoVersionExtension = project.extensions.create(AUTO_VERSION, AutoVersionExtension)
+        autoVersionExtension = project.extensions.create(
+                AUTO_VERSION,
+                AutoVersionExtension,
+                this,
+                project.container(TasksDependedIncrement)
+        )
 
-        autoVersionExtension.plugin = this
+        AutoVersionTask prepeareAutoVersion = project.tasks
+                .create(AutoVersionTask.AUTOVERSION_TASK_NAME, AutoVersionTask) {
 
-        AutoVersionTask prepeareAutoVersion = project.tasks.create(PREPEARE_AUTO_VERSION, AutoVersionTask) {
+                    it.propsFile = getVersionFile()
+                    it.lastBuildReleaseNotes = new File(getLastBuildReleaseNoteFile())
+                    it.extension = autoVersionExtension
 
-            it.propsFile = getVersionFile()
-            it.lastBuildReleaseNotes = new File(getLastBuildReleaseNoteFile())
-            it.extension = autoVersionExtension
-
-        }
+                }
 
         prepeareAutoVersion.group = AUTO_VERSION
         prepeareAutoVersion.description = "Prepeare version."

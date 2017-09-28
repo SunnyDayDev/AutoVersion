@@ -43,7 +43,7 @@ signing {
 
 group='me.sunnydaydev'
 archivesBaseName = "autoversion"
-version='0.0.3'
+version='0.0.4'
 
 uploadArchives {
 

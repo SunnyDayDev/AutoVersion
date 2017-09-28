@@ -6,6 +6,8 @@ import org.gradle.api.tasks.TaskAction
 
 class AutoVersionTask extends DefaultTask {
 
+    static String AUTOVERSION_TASK_NAME = "prepareAutoVersion"
+
     private Properties versionProperties
     private File propsFile
     private File lastBuildReleaseNotes
@@ -15,18 +17,67 @@ class AutoVersionTask extends DefaultTask {
     @TaskAction
     void update() {
 
-        boolean needPrepareVersion = project.gradle.startParameter.taskNames.any {
+        List<String> currentTasks = project.gradle.startParameter.taskNames.collect {
 
             String[] taskNamePaths = it.split(":")
-            String taskName = taskNamePaths[taskNamePaths.length -1]
-
-            extension.autoVersionForTasks.contains(taskName)
+            taskNamePaths[taskNamePaths.length -1]
 
         }
 
-        if (!needPrepareVersion) return
+        boolean needPrepareVersion = currentTasks.any {
 
-        prepareVersion()
+            extension.autoVersionForTasks.contains(it) || it == AUTOVERSION_TASK_NAME
+
+        }
+
+
+        println "Current autoIncrementOnTasks $currentTasks"
+
+        TasksDependedIncrement autoIncrement = null
+
+        if (extension.autoIncrements != null) {
+
+            autoIncrement = extension.autoIncrements.find {
+
+                return it.useOnTasks.any { currentTasks.contains(it) }
+
+            }
+
+        }
+
+        if (autoIncrement != null) {
+
+            println "Autoincrement enabled: ${autoIncrement.increments}"
+
+        } else {
+
+            println "Autoincrement disabled."
+
+        }
+
+        if (needPrepareVersion) {
+
+            System.setProperty("java.awt.headless", "false")
+
+            prepareVersion(autoIncrement != null ? autoIncrement : extension.defaultIncrement)
+
+        } else if (autoIncrement != null) {
+
+            Integer[] versions = versionProperties["VERSION_NAME"].toString()
+                    .split("\\.")
+                    .collect { it.toInteger() }
+            Integer currentVersionCode = versionProperties["VERSION_CODE"].toString().toInteger()
+
+            for(int i = 0; i < 3; i++) {
+                versions[i] += autoIncrement.increments[i]
+            }
+            currentVersionCode += autoIncrement.buildIncrement
+
+            versionProperties["VERSION_NAME"] = versions.join(".")
+            versionProperties["VERSION_CODE"] = String.valueOf(currentVersionCode)
+            versionProperties.store(propsFile.newWriter(), null)
+
+        }
 
     }
 
@@ -55,7 +106,7 @@ class AutoVersionTask extends DefaultTask {
         this.versionProperties = versionProperties
     }
 
-    private void prepareVersion() {
+    private void prepareVersion(Increment increment) {
 
         Integer[] versions = versionProperties["VERSION_NAME"].toString()
                 .split("\\.")
@@ -65,6 +116,9 @@ class AutoVersionTask extends DefaultTask {
         boolean cancelled = true
 
         String lastBuildNotes = lastBuildReleaseNotes.readLines().join("\n")
+
+        boolean lastBuildNotesChanged = false
+        boolean versionChanged = true
 
         new SwingBuilder().edt {
 
@@ -80,7 +134,12 @@ class AutoVersionTask extends DefaultTask {
                 def releaseNotesInput
                 def newVersionLabel
 
-                Integer[] increments = [0, 0, 0, 1]
+                int[] increments = new int[4]
+
+                for (int i = 0; i < 3; i ++) {
+                    increments[i] = increment.increments[i]
+                }
+                increments[3] = increment.buildIncrement
 
                 def updateVersion = {
 
@@ -158,10 +217,10 @@ class AutoVersionTask extends DefaultTask {
                         }
 
                         button text: 'Reset', actionPerformed: {
-                            increments[0] = 0
-                            increments[1] = 0
-                            increments[2] = 0
-                            increments[3] = 1
+
+                            for (int i = 0; i < 4; i ++) {
+                                increments[i] = startIncrements[i]
+                            }
 
                             updateVersion()
                         }
@@ -182,13 +241,24 @@ class AutoVersionTask extends DefaultTask {
 
                         button text: 'Ok', actionPerformed: {
 
-                            versions[0] = versions[0] + increments[0]
-                            versions[1] = versions[1].toInteger() + increments[1]
-                            versions[2] = versions[2].toInteger() + increments[2]
+                            versionChanged = increments.any { it != 0 }
 
-                            currentVersionCode = currentVersionCode + increments[3]
+                            if (versionChanged) {
 
-                            lastBuildNotes = releaseNotesInput.text
+                                versions[0] = versions[0] + increments[0]
+                                versions[1] = versions[1].toInteger() + increments[1]
+                                versions[2] = versions[2].toInteger() + increments[2]
+
+                                currentVersionCode = currentVersionCode + increments[3]
+
+                            }
+
+                            if (lastBuildNotes != releaseNotesInput.text) {
+
+                                lastBuildNotes = releaseNotesInput.text
+                                lastBuildNotesChanged = true
+
+                            }
 
                             cancelled = false
 
@@ -213,11 +283,19 @@ class AutoVersionTask extends DefaultTask {
             throw new Exception("Cancelled.")
         }
 
-        versionProperties["VERSION_NAME"] = versions.join(".")
-        versionProperties["VERSION_CODE"] = String.valueOf(currentVersionCode)
+        if (versionChanged) {
 
-        versionProperties.store(propsFile.newWriter(), null)
-        lastBuildReleaseNotes.write(lastBuildNotes)
+            versionProperties["VERSION_NAME"] = versions.join(".")
+            versionProperties["VERSION_CODE"] = String.valueOf(currentVersionCode)
+            versionProperties.store(propsFile.newWriter(), null)
+
+        }
+
+        if (lastBuildNotesChanged) {
+
+            lastBuildReleaseNotes.write(lastBuildNotes)
+
+        }
 
     }
 
