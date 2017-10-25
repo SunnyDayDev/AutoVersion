@@ -12,7 +12,7 @@ buildscript {
 
     repositories {
 
-        maven { url uri('sample/repo/') }
+        maven { url uri('repo/') }
 
         google()
         jcenter()
@@ -24,7 +24,7 @@ buildscript {
         classpath 'com.android.tools.build:gradle:2.3.3'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
 
-        classpath 'me.sunnydaydev:autoversion:0.0.4'
+        classpath 'me.sunnydaydev:autoversion:0.0.5'
 
     }
 
@@ -38,22 +38,14 @@ repositories {
 
 autoVersion {
 
-    prepareVersionOnTasks "assembleDebug", "assembleRelease"
-
-    defaultIncrement {
-
-        increments 0, 0, 2
-        buildIncrement 1
-
-    }
-
-    autoIncrements {
+    increments {
 
         global {
 
-            useOnTasks "assembleDebug"
-            increments 1, 0, 0
-            buildIncrement 2
+            onBuildTypes "release"
+            increments "0.0.1"
+            buildIncrement 1
+            updateReleaseNotes true
 
         }
 

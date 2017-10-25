@@ -3,7 +3,7 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
   <groupId>me.sunnydaydev</groupId>
-  <artifactId>autoversion</artifactId>
+  <artifactId>me.sunnyday.autoversion</artifactId>
   <version>0.0.4</version>
   <name>AutoVersion</name>
   <description>Automated handling of version code, name and release notes for Android.</description>
