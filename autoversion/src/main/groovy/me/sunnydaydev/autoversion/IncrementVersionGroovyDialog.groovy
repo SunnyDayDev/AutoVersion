@@ -12,8 +12,8 @@ class IncrementVersionGroovyDialog  {
                                  int[] initialVersionIncrements,
                                  String initialReleaseNotes) {
 
-        int[] versionIncrements
-        int versionCodeIncrement
+        int[] versionIncrements = new int[3]
+        int versionCodeIncrement = 0
         String releaseNotes = null
 
         boolean cancelled = true
@@ -43,7 +43,9 @@ class IncrementVersionGroovyDialog  {
                 }
 
                 def resetIncrements = {
-                    versionIncrements = initialVersionIncrements.collect { it }
+                    for (int i; i < 3; i++) {
+                        versionIncrements[i] = initialVersionIncrements[i]
+                    }
                     versionCodeIncrement = initialVersionCodeIncrement
                 }
 
@@ -106,6 +108,7 @@ class IncrementVersionGroovyDialog  {
                         }
 
                         button text: 'Nothing Changed', actionPerformed: {
+
                             versionIncrements[0] = 0
                             versionIncrements[1] = 0
                             versionIncrements[2] = 0

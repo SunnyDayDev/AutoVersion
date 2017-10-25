@@ -75,10 +75,10 @@ internal class Incrementer(
     }
 
     private fun Increment.willIncrement() : Boolean =
-            buildIncrement != 0 && versionNameIncrement != "0.0.0"
+            buildIncrement != 0 || versionNameIncrement != "0.0.0"
 
     private fun IncrementVersionGroovyDialog.Result.versionChanged() : Boolean =
-            versionCodeIncrement != 0 && increments.any { it != 0 }
+            versionCodeIncrement != 0 || increments.any { it != 0 }
 
     private fun incrementVersionName(base: String, appendix: String) : String {
 

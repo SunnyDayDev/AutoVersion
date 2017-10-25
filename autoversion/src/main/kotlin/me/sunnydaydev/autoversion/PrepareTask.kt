@@ -42,8 +42,6 @@ open class PrepareTask : DefaultTask() {
 
         val increments = (incrementTaskIncrements + incrementsByTaskName).distinct()
 
-        println("!!! Increments: ${increments.map { it.name }}")
-
         val increment = increments.maxBy { it.priority } ?: return
 
         checkSingle(increment, increments)
