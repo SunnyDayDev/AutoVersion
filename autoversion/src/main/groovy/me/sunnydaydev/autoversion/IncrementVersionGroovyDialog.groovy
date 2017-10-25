@@ -2,13 +2,15 @@ package me.sunnydaydev.autoversion
 
 import groovy.swing.SwingBuilder
 
+import javax.annotation.Nullable
+
 class IncrementVersionGroovyDialog  {
 
     static Result prepareVersion(int initalVersionCode,
-                          int[] initialVersion,
-                          int initialVersionCodeIncrement,
-                          int[] initialVersionIncrements,
-                          String initialReleaseNotes) {
+                                 int[] initialVersion,
+                                 int initialVersionCodeIncrement,
+                                 int[] initialVersionIncrements,
+                                 String initialReleaseNotes) {
 
         int[] versionIncrements
         int versionCodeIncrement
@@ -19,12 +21,12 @@ class IncrementVersionGroovyDialog  {
         new SwingBuilder().edt {
 
             dialog(modal: true, // Otherwise the build will continue running before you closed the dialog
-                    title: 'Build version.', // Dialog title
-                    alwaysOnTop: true, // pretty much what the name says
-                    resizable: false, // Don't allow the user to resize the dialog
-                    locationRelativeTo: null, // Place dialog in center of the screen
-                    pack: true, // We need to pack the dialog (so it will take the size of it's children)
-                    show: true // Let's show it
+                   title: 'Build version.', // Dialog title
+                   alwaysOnTop: true, // pretty much what the name says
+                   resizable: false, // Don't allow the user to resize the dialog
+                   locationRelativeTo: null, // Place dialog in center of the screen
+                   pack: true, // We need to pack the dialog (so it will take the size of it's children)
+                   show: true // Let's show it
             ) {
 
                 def releaseNotesInput
@@ -136,6 +138,7 @@ class IncrementVersionGroovyDialog  {
                         button text: 'Ok', actionPerformed: {
 
                             releaseNotes = releaseNotesInput.text
+
                             cancelled = false
                             dispose()
                         }
@@ -168,7 +171,7 @@ class IncrementVersionGroovyDialog  {
         private int versionCodeIncrement
         private String releaseNotes
 
-        Result(int[] increments, int versionCodeIncrement, String releaseNotes) {
+        Result(int[] increments, int versionCodeIncrement, @Nullable String releaseNotes) {
             this.increments = increments
             this.versionCodeIncrement = versionCodeIncrement
             this.releaseNotes = releaseNotes

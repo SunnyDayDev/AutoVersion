@@ -13,29 +13,36 @@ open class PrepareTask : DefaultTask() {
     internal lateinit var tasksDependedIncrements: List<Increment>
     internal lateinit var incrementer: Incrementer
     internal lateinit var variant: ApplicationVariant
+    internal var variantIncrementTask: IncrementTask? = null
 
-    private val firstInGraph get() = this === project.gradle.taskGraph.allTasks
-            .firstOrNull { it is PrepareTask }
-
-    private val isAssamble get() = project.gradle.taskGraph.allTasks
+    private val willAssemble get() = project.gradle.taskGraph.allTasks
             .any { it.name == "assemble${variant.name.capitalize()}" }
 
     @TaskAction
     fun prepare() {
 
-        if (!firstInGraph || !isAssamble) return
+        val prepareTasks = project.gradle.taskGraph.allTasks
+                .mapNotNull { it as? PrepareTask }
+                .filter { it.willAssemble }
 
-        val tasks = project.gradle.taskGraph.allTasks
-        val tasksNames = tasks.map { it.name }
+        if (this !== prepareTasks.firstOrNull()) return
 
-        val incrementTasks = tasks.mapNotNull { it as? IncrementTask }
+        val availableIncrementTasks = prepareTasks.map { it.variantIncrementTask }
 
-        val taskIncremets = incrementTasks.map { it.attachedIncrement }
+        val allTasks = project.gradle.taskGraph.allTasks
+        val allTasksNames = allTasks.map { it.name }
+        val incrementTasks = allTasks
+                .mapNotNull { it as? IncrementTask }
+                .filter { availableIncrementTasks.contains(it) }
+
+        val incrementTaskIncrements = incrementTasks.map { it.attachedIncrement }
 
         val incrementsByTaskName = tasksDependedIncrements
-                .filter { it.tasks.any { tasksNames.contains(it) } }
+                .filter { it.tasks.any { allTasksNames.contains(it) } }
 
-        val increments = taskIncremets + incrementsByTaskName
+        val increments = (incrementTaskIncrements + incrementsByTaskName).distinct()
+
+        println("!!! Increments: ${increments.map { it.name }}")
 
         val increment = increments.maxBy { it.priority } ?: return
 

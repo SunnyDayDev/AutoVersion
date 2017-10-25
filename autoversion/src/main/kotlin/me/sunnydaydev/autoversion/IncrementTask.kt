@@ -1,5 +1,6 @@
 package me.sunnydaydev.autoversion
 
+import com.android.build.gradle.api.ApplicationVariant
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 
@@ -11,6 +12,7 @@ open class IncrementTask : DefaultTask() {
 
     internal lateinit var attachedIncrement: Increment
     internal lateinit var incrementer: Incrementer
+    internal lateinit var variant: ApplicationVariant
 
     internal var incrementForExecution: Increment? = null
 

@@ -28,7 +28,7 @@ class Increment(val name: String) {
     var buildTypes: Array<String> = arrayOf()
         private set
 
-    var flavours: Array<String> = arrayOf()
+    var flavors: Array<String> = arrayOf()
         private set
 
     var tasks: Array<String> = arrayOf()
@@ -50,8 +50,8 @@ class Increment(val name: String) {
         this.buildTypes = buildTypes
     }
 
-    fun onFalvours(flavours: Array<String>) {
-        this.flavours = flavours
+    fun onFlavors(flavors: Array<String>) {
+        this.flavors = flavors
     }
 
     fun onTasks(tasks: Array<String>) {

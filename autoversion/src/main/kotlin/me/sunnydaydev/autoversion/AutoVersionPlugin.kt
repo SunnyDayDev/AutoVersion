@@ -41,8 +41,26 @@ class AutoVersionPlugin: Plugin<Project> {
         )
 
         project.afterEvaluate {
-            checkTaskDependedIncrements(extension)
+
+            checkTaskDependedIncrements(extension.increments.toList())
             checkIncrements(extension.increments.toList())
+
+            extension.increments.forEach { increment ->
+
+                project.tasks.create(
+                        "increment${increment.name.capitalize()}",
+                        SimpleIncrementTask::class.java
+                ) {
+
+                    it.group = GROUP
+
+                    it.increment = increment
+                    it.incrementer = incrementer
+
+                }
+
+            }
+
         }
 
         app.applicationVariants.all { variant ->
@@ -50,7 +68,7 @@ class AutoVersionPlugin: Plugin<Project> {
             val variantAvailableIncrements = extension.increments
                     .filter { canIncrement(it, variant) }
 
-            val rootTask = if (variantAvailableIncrements.isNotEmpty()) {
+            val incrementTask = if (variantAvailableIncrements.isNotEmpty()) {
 
                 val maxPriority = variantAvailableIncrements.map { it.priority }.max()
 
@@ -65,14 +83,13 @@ class AutoVersionPlugin: Plugin<Project> {
 
                     it.attachedIncrement = increment
                     it.incrementer = incrementer
+                    it.variant = variant
 
                     variant.preBuild.dependsOn(it)
 
                 }
 
-            } else {
-                variant.preBuild
-            }
+            } else { null }
 
             val prepareTask = project.tasks.create(
                     "prepareAutoVersionFor${variant.name.capitalize()}",
@@ -84,10 +101,16 @@ class AutoVersionPlugin: Plugin<Project> {
                 it.tasksDependedIncrements = extension.increments
                         .filter { it.tasks.isNotEmpty() }
                 it.variant = variant
+                it.variantIncrementTask = incrementTask
 
             }
 
-            rootTask.dependsOn(prepareTask)
+            if (incrementTask == null) {
+                variant.preBuild.dependsOn(prepareTask)
+            } else {
+                incrementTask.dependsOn(prepareTask)
+                variant.preBuild.dependsOn(incrementTask)
+            }
 
         }
 
@@ -96,12 +119,12 @@ class AutoVersionPlugin: Plugin<Project> {
     private fun canIncrement(increment: Increment, variant: ApplicationVariant): Boolean {
         return increment.variants.contains(variant.name) ||
                 increment.buildTypes.contains(variant.buildType.name) ||
-                increment.flavours.any { variant.productFlavors.map { it.name }.contains(it) }
+                (variant.flavorName?.let { increment.flavors.contains(it) } ?: false)
     }
 
-    private fun checkTaskDependedIncrements(extension: AutoVersionExtension) {
+    private fun checkTaskDependedIncrements(increments: List<Increment>) {
 
-        val tasks = extension.increments
+        val tasks = increments
                 .map { it.tasks.distinct() }
                 .transform {
                     arrayListOf<String>()
@@ -111,13 +134,18 @@ class AutoVersionPlugin: Plugin<Project> {
 
         val uniqueNames = mutableSetOf<String>()
 
-        tasks.forEach {
-            if (uniqueNames.contains(it)) {
+        tasks.forEach { taskName ->
+            if (uniqueNames.contains(taskName)) {
+
+                val sameNames = increments
+                        .filter { it.tasks.contains(taskName) }.joinToString { it.name }
+
                 throw IllegalStateException(
-                        "More than one AutoVersion increment depend to task $it"
+                        "More than one AutoVersion increment depend to task $taskName: $sameNames"
                 )
+
             } else {
-                uniqueNames.add(it)
+                uniqueNames.add(taskName)
             }
         }
 
@@ -142,8 +170,8 @@ class AutoVersionPlugin: Plugin<Project> {
 
                 throw IllegalStateException(
                         "Incorrect increment for ${it.name}: Version name increment must have " +
-                                "this format \"X.X.X\" where X can be integer or \"x\", " +
-                                "but not all is \"x\"."
+                                "this format \"X.X.X\" where X can be " +
+                                "any integer or \"x\"(set to 0), but not all is \"x\"."
                 )
 
             }
