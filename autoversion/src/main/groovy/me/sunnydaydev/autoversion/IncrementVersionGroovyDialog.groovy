@@ -80,17 +80,17 @@ class IncrementVersionGroovyDialog  {
                     hbox {
 
                         button text: 'x.0.0', actionPerformed: {
-                            versionIncrements[0] = -versionIncrements[0]
+                            versionIncrements[0] = -initialVersion[0]
                             updateVersion()
                         }
 
                         button text: '0.x.0', actionPerformed: {
-                            versionIncrements[1] = -versionIncrements[1]
+                            versionIncrements[1] = -initialVersion[1]
                             updateVersion()
                         }
 
                         button text: '0.0.x', actionPerformed: {
-                            versionIncrements[2] = -versionIncrements[2]
+                            versionIncrements[2] = -initialVersion[2]
                             updateVersion()
                         }
 
