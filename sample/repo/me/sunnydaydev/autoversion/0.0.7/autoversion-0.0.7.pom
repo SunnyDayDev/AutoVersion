@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>me.sunnydaydev</groupId>
   <artifactId>autoversion</artifactId>
-  <version>0.0.4</version>
+  <version>0.0.7</version>
   <name>AutoVersion</name>
   <description>Automated handling of version code, name and release notes for Android.</description>
   <url>https://github.com/SunnyDayDev/AutoVersion</url>
@@ -24,4 +24,12 @@
   <scm>
     <url>https://github.com/SunnyDayDev/AutoVersion</url>
   </scm>
+  <dependencies>
+    <dependency>
+      <groupId>org.jetbrains.kotlin</groupId>
+      <artifactId>kotlin-stdlib</artifactId>
+      <version>1.1.51</version>
+      <scope>runtime</scope>
+    </dependency>
+  </dependencies>
 </project>

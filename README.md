@@ -20,16 +20,38 @@ Add to your build.gradle:
         }
 
         dependencies {
-            classpath 'me.sunnydaydev:autoversion:0.0.4'
+            classpath 'me.sunnydaydev:autoversion:0.0.7'
         }
     }
     
     ...
     
     autoVersion {
-        
-        prepareVersionOnTasks "assembleDebug", "assembleRelease"// Any tasks which need to prepeare version
-        
+    
+        increments {
+    
+            anyName {
+            
+                priority 1
+                
+                // Choose where you want to autoincrement
+                onVariants "flavTwoDebug"
+                onTasks "assembleFlavOneReleaseProduct"
+                onBuildTypes "releaseProduct"
+                onFlavors "flavOne"
+                
+                versionNameIncrement "0.0.1"
+                versionCodeIncrement 1
+                
+                // Without it it will be automatically incremented in background
+                // else will shown confirm dialog
+                confirmByDialog true
+                updateReleaseNotes true
+    
+            }
+    
+        }
+    
     }
 
     android {
@@ -44,54 +66,11 @@ Add to your build.gradle:
             ...
 
             // If you use Crashlytics or something else
-            ext.betaDistributionReleaseNotesFilePath = autoVersion.releaseNoteFilePath
+            ext.betaDistributionReleaseNotesFilePath = autoVersion.releaseNotesFilePath
             
         }
 
     }
     
-}
-```
-
-After it Autoversion will show 'Prepare version name' dialog on each started task.
-
-Also you can set default increment value:
-```
-autoVersion {
-    
-    prepareVersionOnTasks "assembleDebug", "assembleRelease"
-
-    defaultIncrement {
-
-        // global, major, minor
-        increments 0, 0, 2
-        buildIncrement 1
-
-    }
-
-}
-```
-
-If you want to increment version name/code automatically (without dialog 
-) you can use autoIncrements.
-```
-autoVersion {
-
-    autoIncrements {
-
-        anyName {
-        
-            //On these tasks version will be automatically incremented
-            useOnTasks "assembleDebug"
-            
-            // global, major, minor
-            increments 1, 0, 0
-            
-            buildIncrement 2
-
-        }
-
-    }
-
 }
 ```
