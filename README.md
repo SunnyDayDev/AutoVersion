@@ -20,7 +20,7 @@ Add to your build.gradle:
         }
 
         dependencies {
-            classpath 'me.sunnydaydev:autoversion:0.0.4'
+            classpath 'me.sunnydaydev:autoversion:0.0.7'
         }
     }
     
@@ -63,9 +63,8 @@ autoVersion {
 
     defaultIncrement {
 
-        // global, major, minor
-        increments 0, 0, 2
-        buildIncrement 1
+        versionNameIncrement "0.0.2"
+        versionCodeIncrement 1
 
     }
 
@@ -84,10 +83,8 @@ autoVersion {
             //On these tasks version will be automatically incremented
             useOnTasks "assembleDebug"
             
-            // global, major, minor
-            increments 1, 0, 0
-            
-            buildIncrement 2
+            versionNameIncrement "0.0.1"
+            versionCodeIncrement 2
 
         }
 

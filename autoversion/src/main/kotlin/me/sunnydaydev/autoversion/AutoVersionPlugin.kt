@@ -31,7 +31,7 @@ class AutoVersionPlugin: Plugin<Project> {
     private fun configure(project: Project, app: AppExtension) {
 
         val store = AutoVersionStore(project)
-        val incrementer = Incrementer(store, app.applicationVariants.toList())
+        val incrementer = Incrementer(store)
 
         val extension = project.extensions.create(
                 "autoVersion",
@@ -44,6 +44,8 @@ class AutoVersionPlugin: Plugin<Project> {
 
             checkTaskDependedIncrements(extension.increments.toList())
             checkIncrements(extension.increments.toList())
+
+            incrementer.variants = app.applicationVariants.toList()
 
             extension.increments.forEach { increment ->
 
@@ -155,7 +157,7 @@ class AutoVersionPlugin: Plugin<Project> {
 
         increments.forEach {
 
-            if (it.buildIncrement < 0) {
+            if (it.versionCodeIncrement < 0) {
                 throw IllegalStateException(
                         "Incorrect increment for ${it.name}: Build increment must be more than 0."
                 )

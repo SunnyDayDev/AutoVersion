@@ -10,7 +10,7 @@ class Increment(val name: String) {
     var versionNameIncrement: String = "0.0.0"
         private set
 
-    var buildIncrement: Int = 1
+    var versionCodeIncrement: Int = 1
         private set
 
     var priority = 0
@@ -34,12 +34,12 @@ class Increment(val name: String) {
     var tasks: Array<String> = arrayOf()
         private set
 
-    fun increments(increments: String) {
-        this.versionNameIncrement = increments
+    fun versionNameIncrement(versionNameIncrement: String) {
+        this.versionNameIncrement = versionNameIncrement
     }
 
-    fun buildIncrement(buildIncrement: Int) {
-        this.buildIncrement = buildIncrement
+    fun versionCodeIncrement(versionCodeIncrement: Int) {
+        this.versionCodeIncrement = versionCodeIncrement
     }
 
     fun onVariants(variants: Array<String>) {

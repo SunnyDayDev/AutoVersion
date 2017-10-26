@@ -7,9 +7,10 @@ import com.android.build.gradle.api.ApplicationVariant
  * mail: mail@sunnydaydev.me
  */
 internal class Incrementer(
-        private val store: AutoVersionStore,
-        private val variants: List<ApplicationVariant>
+        private val store: AutoVersionStore
 ) {
+
+    internal var variants: List<ApplicationVariant>? = null
 
     fun executeIncrement(increment: Increment) {
 
@@ -21,7 +22,7 @@ internal class Incrementer(
 
             if (!increment.willIncrement()) return
 
-            store.versionCode += increment.buildIncrement
+            store.versionCode += increment.versionCodeIncrement
             store.versionName = incrementVersionName(store.versionName, increment.versionNameIncrement)
 
             store.commit()
@@ -45,7 +46,7 @@ internal class Incrementer(
         val result = IncrementVersionGroovyDialog.prepareVersion(
                 store.versionCode,
                 store.versionName.split(".").map { it.toInt() }.toIntArray(),
-                increment.buildIncrement,
+                increment.versionCodeIncrement,
                 versionNameIncrements,
                 currentReleaseNotes
         )
@@ -68,14 +69,18 @@ internal class Incrementer(
     }
 
     private fun updateVariants() {
-        variants.forEach {
+
+        variants?.forEach {
             it.setVersionCode(store.versionCode)
             it.setVersionName(store.versionName)
+
+            println("\n\n---> Version name to ${it.name}: ${store.versionName}\n\n")
+
         }
     }
 
     private fun Increment.willIncrement() : Boolean =
-            buildIncrement != 0 || versionNameIncrement != "0.0.0"
+            versionCodeIncrement != 0 || versionNameIncrement != "0.0.0"
 
     private fun IncrementVersionGroovyDialog.Result.versionChanged() : Boolean =
             versionCodeIncrement != 0 || increments.any { it != 0 }

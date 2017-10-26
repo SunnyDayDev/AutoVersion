@@ -24,7 +24,7 @@ buildscript {
         classpath 'com.android.tools.build:gradle:2.3.3'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
 
-        classpath 'me.sunnydaydev:autoversion:0.0.5'
+        classpath 'me.sunnydaydev:autoversion:0.0.7'
 
     }
 
@@ -40,12 +40,32 @@ autoVersion {
 
     increments {
 
+        test {
+
+            priority 1
+            onVariants "flavTwoDebug"
+            versionNameIncrement "0.0.1"
+            versionCodeIncrement 1
+            confirmByDialog true
+            updateReleaseNotes true
+
+        }
+
+        test2 {
+
+            priority 1
+            onVariants "flavThreeDebug"
+            versionNameIncrement "0.0.1"
+            versionCodeIncrement 1
+
+        }
+
         global {
 
             priority 1
             onBuildTypes "releaseProduct"
-            increments "0.0.1"
-            buildIncrement 1
+            versionNameIncrement "0.0.1"
+            versionCodeIncrement 1
             confirmByDialog true
             updateReleaseNotes true
 
@@ -55,18 +75,12 @@ autoVersion {
 
             priority 2
             onTasks "assembleFlavOneReleaseProduct"
-            increments "1.0.x"
+            versionNameIncrement "1.0.x"
         }
 
         testPriority2 {
 
             onFlavors "flavOne"
-        }
-
-        testPriority3 {
-            priority 100
-            onTasks "assembleFlavOneDebug"
-            increments "0.1.0"
         }
 
     }
