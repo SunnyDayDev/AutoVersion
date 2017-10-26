@@ -73,10 +73,8 @@ internal class Incrementer(
         variants?.forEach {
             it.setVersionCode(store.versionCode)
             it.setVersionName(store.versionName)
-
-            println("\n\n---> Version name to ${it.name}: ${store.versionName}\n\n")
-
         }
+
     }
 
     private fun Increment.willIncrement() : Boolean =
