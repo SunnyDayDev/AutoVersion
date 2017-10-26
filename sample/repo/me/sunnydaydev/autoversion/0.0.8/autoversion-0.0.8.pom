@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>me.sunnydaydev</groupId>
   <artifactId>autoversion</artifactId>
-  <version>0.0.7</version>
+  <version>0.0.8</version>
   <name>AutoVersion</name>
   <description>Automated handling of version code, name and release notes for Android.</description>
   <url>https://github.com/SunnyDayDev/AutoVersion</url>
