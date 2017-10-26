@@ -1,4 +1,10 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
+apply plugin: 'com.android.application'
+
+apply plugin: 'kotlin-android'
+
+apply plugin: 'kotlin-android-extensions'
+
+apply plugin: 'me.sunnydaydev.autoversion'
 
 buildscript {
 
@@ -14,23 +20,130 @@ buildscript {
     }
 
     dependencies {
+
         classpath 'com.android.tools.build:gradle:2.3.3'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
 
-        classpath 'me.sunnydaydev:autoversion:0.0.4'
+        classpath 'me.sunnydaydev:autoversion:0.0.7'
 
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
     }
+
 }
 
-allprojects {
-    repositories {
-        google()
-        jcenter()
-    }
+repositories {
+    google()
+    jcenter()
+
 }
 
-task clean(type: Delete) {
-    delete rootProject.buildDir
+autoVersion {
+
+    increments {
+
+        test {
+
+            priority 1
+            onVariants "flavTwoDebug"
+            versionNameIncrement "0.0.1"
+            versionCodeIncrement 1
+            confirmByDialog true
+            updateReleaseNotes true
+
+        }
+
+        test2 {
+
+            priority 1
+            onVariants "flavThreeDebug"
+            versionNameIncrement "0.0.1"
+            versionCodeIncrement 1
+
+        }
+
+        global {
+
+            priority 1
+            onBuildTypes "releaseProduct"
+            versionNameIncrement "0.0.1"
+            versionCodeIncrement 1
+            confirmByDialog true
+            updateReleaseNotes true
+
+        }
+
+        testPriority1 {
+
+            priority 2
+            onTasks "assembleFlavOneReleaseProduct"
+            versionNameIncrement "1.0.x"
+        }
+
+        testPriority2 {
+
+            onFlavors "flavOne"
+        }
+
+    }
+
+}
+
+android {
+
+    compileSdkVersion 26
+    buildToolsVersion "26.0.1"
+
+    defaultConfig {
+
+        applicationId "sunnydaydev.me.autoversionsample"
+        minSdkVersion 15
+        targetSdkVersion 26
+        versionCode autoVersion.versionCode
+        versionName autoVersion.versionName
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+
+    dataBinding {
+        enabled = true
+    }
+
+    buildTypes {
+
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+
+        releaseProduct {
+
+        }
+    }
+
+    flavorDimensions "increment"
+
+    productFlavors {
+
+        flavOne {
+            dimension "increment"
+        }
+
+        flavTwo {
+            dimension "increment"
+        }
+
+        flavThree {
+            dimension "increment"
+        }
+
+    }
+
+}
+
+dependencies {
+    
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'com.android.support:appcompat-v7:26.1.0'
+    compile 'com.android.support.constraint:constraint-layout:1.0.2'
+
+    compile"org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+
 }

@@ -1,0 +1,226 @@
+import groovy.swing.SwingBuilder
+
+apply plugin: 'kotlin'
+apply plugin: 'groovy'
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+buildscript{
+
+    ext.kotlinVersion = '1.1.51'
+
+
+    repositories {
+        google()
+        jcenter()
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
+    }
+
+}
+
+repositories {
+    google()
+    jcenter()
+}
+
+dependencies {
+
+    implementation gradleApi()
+
+    compileOnly 'com.android.tools.build:gradle:3.0.0-rc2'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+
+}
+
+sourceSets {
+
+    main {
+
+        java.srcDirs += 'src/main/kotlin'
+
+    }
+
+}
+
+project.afterEvaluate {
+
+    compileJava.dependsOn = compileJava.taskDependencies.values - compileKotlin
+    compileGroovy.dependsOn = compileGroovy.dependsOn - compileJava
+    compileKotlin.dependsOn(compileGroovy)
+
+    compileKotlin.classpath += files(compileGroovy.destinationDir)
+
+}
+
+sourceCompatibility = "1.7"
+targetCompatibility = "1.7"
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
+signing {
+    sign configurations.archives
+}
+
+group='me.sunnydaydev'
+archivesBaseName = "autoversion"
+version='0.0.7'
+
+uploadArchives {
+
+    repositories {
+
+        int MAVEN = 0
+        int LOCAL = 1
+        int SAMPLE = 2
+
+        int where = MAVEN
+
+        boolean checkWhere = project.gradle.startParameter.taskNames.any { it.contains("uploadArchives") }
+
+        if (checkWhere) {
+
+            boolean cancelled = true
+
+            new SwingBuilder().edt {
+
+                dialog(modal: true, // Otherwise the build will continue running before you closed the dialog
+                        title: 'Build version.', // Dialog title
+                        alwaysOnTop: true, // pretty much what the name says
+                        resizable: false, // Don't allow the user to resize the dialog
+                        locationRelativeTo: null, // Place dialog in center of the screen
+                        pack: true, // We need to pack the dialog (so it will take the size of it's children)
+                        show: true // Let's show it
+                ) {
+
+                    vbox {
+
+                        label text: "Where to upload?"
+
+                        hbox {
+
+                            button defaultButton: true, text: 'Maven Central', actionPerformed: {
+                                cancelled = false
+                                dispose()
+                            }
+
+                            button defaultButton: true, text: 'Local', actionPerformed: {
+                                cancelled = false
+                                where = LOCAL
+                                dispose()
+                            }
+
+                            button defaultButton: true, text: 'Samle', actionPerformed: {
+                                cancelled = false
+                                where = SAMPLE
+                                dispose()
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+            if (cancelled) {
+                throw new Exception("Cancelled.")
+            }
+
+        }
+
+        def prepearePom = { pom ->
+
+            pom.project {
+                name 'AutoVersion'
+                packaging 'jar'
+                // optionally artifactId can be defined here
+                description 'Automated handling of version code, name and release notes for Android.'
+                url 'https://github.com/SunnyDayDev/AutoVersion'
+
+                scm {
+                    //connection 'scm:svn:http://foo.googlecode.com/svn/trunk/'
+                    //developerConnection 'scm:svn:https://foo.googlecode.com/svn/trunk/'
+                    url 'https://github.com/SunnyDayDev/AutoVersion'
+                }
+
+                licenses {
+                    license {
+                        name 'The Apache License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'sunnydaydev'
+                        name 'Aleksandr Tcikin'
+                        email 'mail@sunnydaydev.me'
+                    }
+                }
+            }
+
+        }
+
+        switch (where) {
+
+            case MAVEN:
+
+                mavenDeployer {
+
+                    beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+                    repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2") {
+                        authentication(userName: ossrhUsername, password: ossrhPassword)
+                    }
+
+                    snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots") {
+                        authentication(userName: ossrhUsername, password: ossrhPassword)
+                    }
+
+                    prepearePom(pom)
+
+                }
+
+                break
+
+            case LOCAL:
+
+                mavenDeployer {
+
+                    repository(url: mavenLocal().url)
+                    prepearePom(pom)
+
+                }
+
+                break
+
+            case SAMPLE:
+
+                mavenDeployer {
+
+                    repository(url: uri('../sample/repo'))
+                    prepearePom(pom)
+
+                }
+
+                break
+        }
+    }
+
+}
