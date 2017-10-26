@@ -22,8 +22,6 @@ fun ApplicationVariant.setVersionCode(code: Int) {
 
 fun ApplicationVariant.setVersionName(name: String) {
 
-    println("ProductFlavor class:${mergedFlavor::class.simpleName}")
-
     mergedFlavor::class.declaredFunctions
             .find { it.name == "setVersionName" }
             ?.call(mergedFlavor, name) ?: println("Method ProductFlavor.setVersionName(String) not found.")

@@ -20,7 +20,7 @@ Add to your build.gradle:
         }
 
         dependencies {
-            classpath 'me.sunnydaydev:autoversion:0.0.7'
+            classpath 'me.sunnydaydev:autoversion:0.0.8'
         }
     }
     
